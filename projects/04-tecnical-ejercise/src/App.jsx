@@ -1,38 +1,22 @@
-import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import { useCatFact } from './hooks/useCatFact'
+import { useCatImage } from './hooks/useCatImage'
 
 function App() {
 
-  const CAT_ENDPOINT_FACT = 'https://catfact.ninja/fact'
-  const CAT_PREFIX_URL = `https://cataas.com`
-  const [fact, setFact] = useState()
-  const [imageUrl, setImage] = useState()
 
-  useEffect( () => {
-    fetch(CAT_ENDPOINT_FACT)
-      .then( response => response.json())
-      .then( data => {
-        const { fact } = data;
-        setFact(fact)}) 
-  },[])
+  const {fact, refreshFact} = useCatFact()
+  const {imageUrl} = useCatImage({fact})
 
-  useEffect( () => {
-    if (!fact) return
-    const threeWord = fact.split(' ',3).join(' ')
-    fetch(`https://cataas.com/cat/says/${threeWord}?json=true`)
-      .then( response => response.json())
-      .then( data => {
-        setImage(data.url)
-      })
-  },[fact])
-
+  const handleClick = async () => {
+    refreshFact()
+  }
   return (
     <main>
       <h1>Cats App</h1>
+      <button onClick={handleClick}>Get new fact</button>
       { fact && <p>{fact}</p>}
-      { imageUrl && <img src={`${CAT_PREFIX_URL}${imageUrl}`} alt="Image extracted using three firsts words in the fact" />}
+      { imageUrl && <img src={imageUrl} alt="Image extracted using three firsts words in the fact" />}
     </main>
   )
 }
