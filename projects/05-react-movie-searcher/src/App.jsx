@@ -2,7 +2,8 @@
 import './App.css'
 import { Movies } from './components/Movies.jsx';
 import { useMovies } from './hooks/useMovies';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import debounce from 'just-debounce-it'
 
 const useSearch = () => {
   const [search, setSearch] = useState('');
@@ -39,16 +40,27 @@ const useSearch = () => {
 
 function App() {
 
+  const [sort, setSort] = useState(false);
   const { search, setSearch, error } = useSearch();
-  const { movies, getMovies } = useMovies({ search });
+  const { movies, getMovies, loading } = useMovies({ search, sort });
+
+  const debouncedGetMovies = useCallback(debounce(search => {
+    getMovies({ search });
+  }, 300), [getMovies])
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    getMovies();
+    getMovies({ search });
   }
 
   const handleChange = (event) => {
-    setSearch(event.target.value);
+    const newSearch = event.target.value;
+    setSearch(newSearch);
+    debouncedGetMovies(newSearch);
+  }
+
+  const handleSort = () => {
+    setSort(!sort);
   }
 
   return (
@@ -57,18 +69,16 @@ function App() {
         <h1>Search Movie</h1>
         <form className="form" onSubmit={handleSubmit}>
           <input onChange={handleChange} value={search} placeholder='Avengers, Star Wars...' />
+          <input type="checkbox" checked={sort} onChange={handleSort} />
           <button type="submit">Search</button>
         </form>
         {error && <p className="error">{error}</p>}
       </header>
 
       <main>
-        <Movies movies={movies} />
+        {loading ? <p>Loading...</p> : <Movies movies={movies} />}
       </main>
     </div >
   )
 }
-
-//API KEY: b4918a02
-
 export default App
